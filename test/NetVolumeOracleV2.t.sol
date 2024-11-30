@@ -19,7 +19,7 @@ import {Hooks} from "v4-core/libraries/Hooks.sol";
 
 import {NetVolumeOracleV1} from "../src/NetVolumeOracleV1.sol";
 
-contract TestNetVolumeOracleV1 is Test, Deployers {
+contract TestNetVolumeOracleV2 is Test, Deployers {
     using CurrencyLibrary for Currency;
 
     Currency ethCurrency = Currency.wrap(address(0));
@@ -35,7 +35,7 @@ contract TestNetVolumeOracleV1 is Test, Deployers {
         // deploy hook to an address that has the proper flags set
         uint160 flags = uint160(Hooks.AFTER_SWAP_FLAG);
         hook = NetVolumeOracleV1(address(flags));
-        deployCodeTo("NetVolumeOracleV1.sol", abi.encode(manager), address(hook));
+        deployCodeTo("NetVolumeOracleV2.sol", abi.encode(manager), address(hook));
 
         (key,) = initPoolAndAddLiquidity(
             currency0, currency1, IHooks(address(hook)), 100, SQRT_PRICE_1_1
@@ -46,10 +46,10 @@ contract TestNetVolumeOracleV1 is Test, Deployers {
         vm.label(Currency.unwrap(currency1), "currency1");
     }
 
-    function test_swap_zeroForOne() public {
+    /* Util function for swapping token0 to token1 */
+    function swap_zeroForOne(uint256 amountToSwap) public returns (BalanceDelta) {
         // Set user address in hook data
         bytes memory hookData = abi.encode(address(this));
-        uint256 amountToSwap = 1e15;
 
         PoolSwapTest.TestSettings memory testSettings = 
             PoolSwapTest.TestSettings({
@@ -70,27 +70,13 @@ contract TestNetVolumeOracleV1 is Test, Deployers {
             hookData
         );
 
-        // assert that the netVolume of token0 on the pool is negative
-        assertEq(hook.poolNetVolumeToken0(poolId), delta.amount0());
-        assertLt(hook.poolNetVolumeToken0(poolId), 0);
-
-        // assert that the netVolume of token1 on the pool is positive
-        assertEq(hook.poolNetVolumeToken1(poolId), delta.amount1());
-        assertGt(hook.poolNetVolumeToken1(poolId), 0);
-
-        // assert that the user's net volume of token0 is negative
-        assertEq(hook.userNetVolumeToken0(poolId, address(this)), delta.amount0());
-        assertLt(hook.userNetVolumeToken0(poolId, address(this)), 0);
-
-        // assert that the user's net volume of token1 is positive
-        assertEq(hook.userNetVolumeToken1(poolId, address(this)), delta.amount1());
-        assertGt(hook.userNetVolumeToken1(poolId, address(this)), 0);
+        return delta;
     }
 
-    function test_swap_oneForZero() public {
+    /* Util function for swapping token1 to token0 */
+    function swap_oneForZero(uint256 amountToSwap) public returns (BalanceDelta) {
         // Set user address in hook data
         bytes memory hookData = abi.encode(address(this));
-        uint256 amountToSwap = 1e15;
 
         PoolSwapTest.TestSettings memory testSettings = 
             PoolSwapTest.TestSettings({
@@ -98,7 +84,7 @@ contract TestNetVolumeOracleV1 is Test, Deployers {
                     settleUsingBurn: false
                 });
 
-        // swap token0 for token1
+        // swap token1 for token0
         IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
             zeroForOne: false,
             amountSpecified: -int256(amountToSwap),
@@ -111,20 +97,6 @@ contract TestNetVolumeOracleV1 is Test, Deployers {
             hookData
         );
 
-        // assert that the netVolume of token0 on the pool is negative
-        assertEq(hook.poolNetVolumeToken0(poolId), delta.amount0());
-        assertGt(hook.poolNetVolumeToken0(poolId), 0);
-
-        // assert that the netVolume of token1 on the pool is positive
-        assertEq(hook.poolNetVolumeToken1(poolId), delta.amount1());
-        assertLt(hook.poolNetVolumeToken1(poolId), 0);
-
-        // assert that the user's net volume of token0 is positive
-        assertEq(hook.userNetVolumeToken0(poolId, address(this)), delta.amount0());
-        assertGt(hook.userNetVolumeToken0(poolId, address(this)), 0);
-
-        // assert that the user's net volume of token1 is negative
-        assertEq(hook.userNetVolumeToken1(poolId, address(this)), delta.amount1());
-        assertLt(hook.userNetVolumeToken1(poolId, address(this)), 0);
+        return delta;
     }
 }
