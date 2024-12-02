@@ -401,93 +401,92 @@ contract TestOracle is Test, GasSnapshot {
         assertEq(token1VolumeCumulative, -3);
     }
 
-    /*
     function testTwoObservationsChronologicalZeroSecondsAgoExact() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         oracle.grow(2);
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, tick: 1, liquidity: 2}));
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 0);
-        assertEq(tickCumulative, -20);
-        assertEq(secondsPerLiquidityCumulativeX128, 272225893536750770770699685945414569164);
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
+        assertEq(token0VolumeCumulative, 8);
+        assertEq(token1VolumeCumulative, -4);
     }
 
     function testTwoObservationsChronologicalZeroSecondsAgoCounterfactual() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         oracle.grow(2);
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, tick: 1, liquidity: 2}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         oracle.advanceTime(7);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 0);
-        assertEq(tickCumulative, -13);
-        assertEq(secondsPerLiquidityCumulativeX128, 1463214177760035392892510811956603309260);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
+        assertEq(token0VolumeCumulative, 29);
+        assertEq(token1VolumeCumulative, -18);
     }
 
     function testTwoObservationsChronologicalSecondsAgoExactlyFirstObservation() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         oracle.grow(2);
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, tick: 1, liquidity: 2}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         oracle.advanceTime(7);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 11);
-        assertEq(tickCumulative, 0);
-        assertEq(secondsPerLiquidityCumulativeX128, 0);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 11);
+        assertEq(token0VolumeCumulative, 0);
+        assertEq(token1VolumeCumulative, 0);
     }
 
     function testTwoObservationsChronologicalSecondsAgoBetween() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         oracle.grow(2);
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, tick: 1, liquidity: 2}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         oracle.advanceTime(7);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 9);
-        assertEq(tickCumulative, -10);
-        assertEq(secondsPerLiquidityCumulativeX128, 136112946768375385385349842972707284582);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 9);
+        assertEq(token0VolumeCumulative, 4);
+        assertEq(token1VolumeCumulative, -2);
     }
 
     function testTwoObservationsReverseOrderZeroSecondsAgoExact() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         oracle.grow(2);
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, tick: 1, liquidity: 2}));
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, tick: -5, liquidity: 4}));
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 0);
-        assertEq(tickCumulative, -17);
-        assertEq(secondsPerLiquidityCumulativeX128, 782649443918158465965761597093066886348);
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, token0Volume: 1, token1Volume: -1}));
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
+        assertEq(token0VolumeCumulative, 17);
+        assertEq(token1VolumeCumulative, -10);
     }
 
     function testTwoObservationsReverseOrderZeroSecondsAgoCounterfactual() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         oracle.grow(2);
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, tick: 1, liquidity: 2}));
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, tick: -5, liquidity: 4}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, token0Volume: 1, token1Volume: -1}));
         oracle.advanceTime(7);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 0);
-        assertEq(tickCumulative, -52);
-        assertEq(secondsPerLiquidityCumulativeX128, 1378143586029800777026667160098661256396);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
+        assertEq(token0VolumeCumulative, 24);
+        assertEq(token1VolumeCumulative, -17);
     }
 
     function testTwoObservationsReverseOrderSecondsAgoExactlyOnFirstObservation() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         oracle.grow(2);
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, tick: 1, liquidity: 2}));
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, tick: -5, liquidity: 4}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, token0Volume: 1, token1Volume: -1}));
         oracle.advanceTime(7);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 10);
-        assertEq(tickCumulative, -20);
-        assertEq(secondsPerLiquidityCumulativeX128, 272225893536750770770699685945414569164);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 10);
+        assertEq(token0VolumeCumulative, 8);
+        assertEq(token1VolumeCumulative, -4);
     }
 
     function testTwoObservationsReverseOrderSecondsAgoBetween() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         oracle.grow(2);
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, tick: 1, liquidity: 2}));
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, tick: -5, liquidity: 4}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, token0Volume: 1, token1Volume: -1}));
         oracle.advanceTime(7);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 9);
-        assertEq(tickCumulative, -19);
-        assertEq(secondsPerLiquidityCumulativeX128, 442367076997220002502386989661298674892);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 9);
+        assertEq(token0VolumeCumulative, 11);
+        assertEq(token1VolumeCumulative, -6);
     }
 
     function testCanFetchMultipleObservations() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 2 ** 15, tick: 2, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         oracle.grow(4);
-        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 13, tick: 6, liquidity: 2 ** 12}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 13, token0Volume: 3, token1Volume: -2}));
         oracle.advanceTime(5);
         uint32[] memory secondsAgos = new uint32[](6);
         secondsAgos[0] = 0;
@@ -496,26 +495,26 @@ contract TestOracle is Test, GasSnapshot {
         secondsAgos[3] = 13;
         secondsAgos[4] = 15;
         secondsAgos[5] = 18;
-        (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) =
+        (int256[] memory token0VolumeCumulatives, int256[] memory token1VolumeCumulatives) =
             oracle.observe(secondsAgos);
-        assertEq(tickCumulatives.length, 6);
-        assertEq(tickCumulatives[0], 56);
-        assertEq(tickCumulatives[1], 38);
-        assertEq(tickCumulatives[2], 20);
-        assertEq(tickCumulatives[3], 10);
-        assertEq(tickCumulatives[4], 6);
-        assertEq(tickCumulatives[5], 0);
-        assertEq(secondsPerLiquidityCumulativeX128s.length, 6);
-        assertEq(secondsPerLiquidityCumulativeX128s[0], 550383467004691728624232610897330176);
-        assertEq(secondsPerLiquidityCumulativeX128s[1], 301153217795020002454768787094765568);
-        assertEq(secondsPerLiquidityCumulativeX128s[2], 103845937170696552570609926584401920);
-        assertEq(secondsPerLiquidityCumulativeX128s[3], 51922968585348276285304963292200960);
-        assertEq(secondsPerLiquidityCumulativeX128s[4], 31153781151208965771182977975320576);
-        assertEq(secondsPerLiquidityCumulativeX128s[5], 0);
+        assertEq(token0VolumeCumulatives.length, 6);
+        assertEq(token1VolumeCumulatives.length, 6);
+        assertEq(token0VolumeCumulatives[0], 41);
+        assertEq(token1VolumeCumulatives[0], -23);
+        assertEq(token0VolumeCumulatives[1], 32);
+        assertEq(token1VolumeCumulatives[1], -17);
+        assertEq(token0VolumeCumulatives[2], 20);
+        assertEq(token1VolumeCumulatives[2], -10);
+        assertEq(token0VolumeCumulatives[3], 10);
+        assertEq(token1VolumeCumulatives[3], -5);
+        assertEq(token0VolumeCumulatives[4], 6);
+        assertEq(token1VolumeCumulatives[4], -3);
+        assertEq(token0VolumeCumulatives[5], 0);
+        assertEq(token1VolumeCumulatives[5], 0);
     }
 
     function testObserveGasSinceMostRecent() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         oracle.advanceTime(2);
         uint32[] memory secondsAgos = new uint32[](1);
         secondsAgos[0] = 1;
@@ -523,14 +522,14 @@ contract TestOracle is Test, GasSnapshot {
     }
 
     function testObserveGasCurrentTime() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         uint32[] memory secondsAgos = new uint32[](1);
         secondsAgos[0] = 0;
         snap("OracleObserveCurrentTime", oracle.getGasCostOfObserve(secondsAgos));
     }
 
     function testObserveGasCurrentTimeCounterfactual() public {
-        oracle.initialize(OracleImplementation.InitializeParams({liquidity: 5, tick: -5, time: 5}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
         initializedOracle.advanceTime(5);
         uint32[] memory secondsAgos = new uint32[](1);
         secondsAgos[0] = 0;
@@ -548,9 +547,9 @@ contract TestOracle is Test, GasSnapshot {
     function testManyObservationsLatestObservationSameTimeAsLatest(uint32 startingTime) public {
         setupOracleWithManyObservations(startingTime);
 
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 0);
-        assertEq(tickCumulative, -21);
-        assertEq(secondsPerLiquidityCumulativeX128, 2104079302127802832415199655953100107502);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
+        assertEq(token0VolumeCumulative, 61);
+        assertEq(token1VolumeCumulative, -39);
     }
 
     function testManyObservationsLatestObservation5SecondsAfterLatest(uint32 startingTime) public {
@@ -558,35 +557,35 @@ contract TestOracle is Test, GasSnapshot {
 
         // latest observation 5 seconds after latest
         oracle.advanceTime(5);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 5);
-        assertEq(tickCumulative, -21);
-        assertEq(secondsPerLiquidityCumulativeX128, 2104079302127802832415199655953100107502);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 5);
+        assertEq(token0VolumeCumulative, 61);
+        assertEq(token1VolumeCumulative, -39);
     }
 
     function testManyObservationsCurrentObservation5SecondsAfterLatest(uint32 startingTime) public {
         setupOracleWithManyObservations(startingTime);
 
         oracle.advanceTime(5);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 0);
-        assertEq(tickCumulative, 9);
-        assertEq(secondsPerLiquidityCumulativeX128, 2347138135642758877746181518404363115684);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
+        assertEq(token0VolumeCumulative, 96);
+        assertEq(token1VolumeCumulative, -64);
     }
 
     function testManyObservationsBetweenLatestObservationAtLatest(uint32 startingTime) public {
         setupOracleWithManyObservations(startingTime);
 
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 3);
-        assertEq(tickCumulative, -33);
-        assertEq(secondsPerLiquidityCumulativeX128, 1593655751746395137220137744805447790318);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 3);
+        assertEq(token0VolumeCumulative, 43);
+        assertEq(token1VolumeCumulative, -27);
     }
 
     function testManyObservationsBetweenLatestObservationAfterLatest(uint32 startingTime) public {
         setupOracleWithManyObservations(startingTime);
 
         oracle.advanceTime(5);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 8);
-        assertEq(tickCumulative, -33);
-        assertEq(secondsPerLiquidityCumulativeX128, 1593655751746395137220137744805447790318);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 8);
+        assertEq(token0VolumeCumulative, 43);
+        assertEq(token1VolumeCumulative, -27);
     }
 
     function testManyObservationsOlderThanOldestReverts(uint32 startingTime) public {
@@ -622,17 +621,17 @@ contract TestOracle is Test, GasSnapshot {
 
     function testManyObservationsOldest(uint32 startingTime) public {
         setupOracleWithManyObservations(startingTime);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 14);
-        assertEq(tickCumulative, -13);
-        assertEq(secondsPerLiquidityCumulativeX128, 544451787073501541541399371890829138329);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 14);
+        assertEq(token0VolumeCumulative, 4);
+        assertEq(token1VolumeCumulative, -2);
     }
 
     function testManyObservationsOldestAfterTime(uint32 startingTime) public {
         setupOracleWithManyObservations(startingTime);
         oracle.advanceTime(6);
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) = observeSingle(oracle, 20);
-        assertEq(tickCumulative, -13);
-        assertEq(secondsPerLiquidityCumulativeX128, 544451787073501541541399371890829138329);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 20);
+        assertEq(token0VolumeCumulative, 4);
+        assertEq(token1VolumeCumulative, -2);
     }
 
     function testManyObservationsFetchManyValues(uint32 startingTime) public {
@@ -646,22 +645,22 @@ contract TestOracle is Test, GasSnapshot {
         secondsAgos[4] = 5;
         secondsAgos[5] = 1;
         secondsAgos[6] = 0;
-        (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) =
+        (int256[] memory token0VolumeCumulatives, int256[] memory token1VolumeCumulatives) =
             oracle.observe(secondsAgos);
-        assertEq(tickCumulatives[0], -13);
-        assertEq(secondsPerLiquidityCumulativeX128s[0], 544451787073501541541399371890829138329);
-        assertEq(tickCumulatives[1], -31);
-        assertEq(secondsPerLiquidityCumulativeX128s[1], 799663562264205389138930327464655296921);
-        assertEq(tickCumulatives[2], -43);
-        assertEq(secondsPerLiquidityCumulativeX128s[2], 1045423049484883168306923099498710116305);
-        assertEq(tickCumulatives[3], -37);
-        assertEq(secondsPerLiquidityCumulativeX128s[3], 1423514568285925905488450441089563684590);
-        assertEq(tickCumulatives[4], -15);
-        assertEq(secondsPerLiquidityCumulativeX128s[4], 2152691068830794041481396028443352709138);
-        assertEq(tickCumulatives[5], 9);
-        assertEq(secondsPerLiquidityCumulativeX128s[5], 2347138135642758877746181518404363115684);
-        assertEq(tickCumulatives[6], 15);
-        assertEq(secondsPerLiquidityCumulativeX128s[6], 2395749902345750086812377890894615717321);
+        assertEq(token0VolumeCumulatives[0], 4);
+        assertEq(token1VolumeCumulatives[0], -2);
+        assertEq(token0VolumeCumulatives[1], 13);
+        assertEq(token1VolumeCumulatives[1], -8);
+        assertEq(token0VolumeCumulatives[2], 20);
+        assertEq(token1VolumeCumulatives[2], -12);
+        assertEq(token0VolumeCumulatives[3], 37);
+        assertEq(token1VolumeCumulatives[3], -23);
+        assertEq(token0VolumeCumulatives[4], 68);
+        assertEq(token1VolumeCumulatives[4], -44);
+        assertEq(token0VolumeCumulatives[5], 96);
+        assertEq(token1VolumeCumulatives[5], -64);
+        assertEq(token0VolumeCumulatives[6], 103);
+        assertEq(token1VolumeCumulatives[6], -69);
     }
 
     function testGasAllOfLast20Seconds() public {
@@ -718,50 +717,50 @@ contract TestOracle is Test, GasSnapshot {
         assertEq(oracle.index(), 165);
 
         // can observe into the ordered portion with exact seconds ago
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulative) = observeSingle(oracle, 100 * 13);
-        assertEq(tickCumulative, -27970560813);
-        assertEq(secondsPerLiquidityCumulative, 60465049086512033878831623038233202591033);
+        (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 100 * 13);
+        assertEq(token0VolumeCumulative, 27970560813);
+        assertEq(token1VolumeCumulative, -27970560813);
 
         // can observe into the ordered portion with unexact seconds ago
-        (tickCumulative, secondsPerLiquidityCumulative) = observeSingle(oracle, 100 * 13 + 5);
-        assertEq(tickCumulative, -27970232823);
-        assertEq(secondsPerLiquidityCumulative, 60465023149565257990964350912969670793706);
+        (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 100 * 13 + 5);
+        assertEq(token0VolumeCumulative, 27970232823);
+        assertEq(token1VolumeCumulative, -27970232823);
 
         // can observe at exactly the latest observation
-        (tickCumulative, secondsPerLiquidityCumulative) = observeSingle(oracle, 0);
-        assertEq(tickCumulative, -28055903863);
-        assertEq(secondsPerLiquidityCumulative, 60471787506468701386237800669810720099776);
+        (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 0);
+        assertEq(token0VolumeCumulative, 28055903863);
+        assertEq(token1VolumeCumulative, -28055903863);
 
         // can observe into the unordered portion of array at exact seconds ago
-        (tickCumulative, secondsPerLiquidityCumulative) = observeSingle(oracle, 200 * 13);
-        assertEq(tickCumulative, -27885347763);
-        assertEq(secondsPerLiquidityCumulative, 60458300386499273141628780395875293027404);
+        (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 200 * 13);
+        assertEq(token0VolumeCumulative, 27885347763);
+        assertEq(token1VolumeCumulative, -27885347763);
 
         // can observe into the unordered portion of array at seconds ago between observations
-        (tickCumulative, secondsPerLiquidityCumulative) = observeSingle(oracle, 200 * 13 + 5);
-        assertEq(tickCumulative, -27885020273);
-        assertEq(secondsPerLiquidityCumulative, 60458274409952896081377821330361274907140);
+        (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 200 * 13 + 5);
+        assertEq(token0VolumeCumulative, 27885020273);
+        assertEq(token1VolumeCumulative, -27885020273);
 
         // can observe the oldest observation
-        (tickCumulative, secondsPerLiquidityCumulative) = observeSingle(oracle, 13 * 65534);
-        assertEq(tickCumulative, -175890);
-        assertEq(secondsPerLiquidityCumulative, 33974356747348039873972993881117400879779);
+        (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 65534 * 13);
+        assertEq(token0VolumeCumulative, 175890);
+        assertEq(token1VolumeCumulative, -175890);
 
         // can observe at exactly the latest observation after some time passes
         oracle.advanceTime(5);
-        (tickCumulative, secondsPerLiquidityCumulative) = observeSingle(oracle, 5);
-        assertEq(tickCumulative, -28055903863);
-        assertEq(secondsPerLiquidityCumulative, 60471787506468701386237800669810720099776);
+        (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 5);
+        assertEq(token0VolumeCumulative, 28055903863);
+        assertEq(token1VolumeCumulative, -28055903863);
 
         // can observe after the latest observation counterfactual
-        (tickCumulative, secondsPerLiquidityCumulative) = observeSingle(oracle, 3);
-        assertEq(tickCumulative, -28056035261);
-        assertEq(secondsPerLiquidityCumulative, 60471797865298117996489508104462919730461);
+        (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 3);
+        assertEq(token0VolumeCumulative, 28056035261);
+        assertEq(token1VolumeCumulative, -28056035261);
 
         // can observe the oldest observation after time passes
-        (tickCumulative, secondsPerLiquidityCumulative) = observeSingle(oracle, 13 * 65534 + 5);
-        assertEq(tickCumulative, -175890);
-        assertEq(secondsPerLiquidityCumulative, 33974356747348039873972993881117400879779);
+        (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 65534 * 13 + 5);
+        assertEq(token0VolumeCumulative, 175890);
+        assertEq(token1VolumeCumulative, -175890);
     }
 
     function testFullOracleGasCostObserveZero() public {
@@ -815,7 +814,6 @@ contract TestOracle is Test, GasSnapshot {
         secondsAgos[0] = 13 * 65534;
         snap("FullOracleObserveOldestAfter5Seconds", oracle.getGasCostOfObserve(secondsAgos));
     }
-    */
 
     // fixtures and helpers
 
