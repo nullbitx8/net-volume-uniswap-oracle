@@ -23,6 +23,9 @@ library Oracle {
         // the volume accumulators, i.e. volume * time elapsed since the pool was first initialized
         int256 token0VolumeCumulative;
         int256 token1VolumeCumulative;
+        // the volume at the observation
+        int128 token0Volume;
+        int128 token1Volume;
         // whether or not the observation is initialized
         bool initialized;
     }
@@ -48,14 +51,99 @@ library Oracle {
             uint32 delta = blockTimestamp - last.blockTimestamp;
             // when the timestamp is the same (multiple observations in the same block)
             // set the delta to 1 so that the volume is scaled appropriately
-            delta = delta == 0 ? 1 : delta;
+            bool sameBlock = delta == 0;
+            if (sameBlock) delta = 1;
 
+            // if this tranform is part of the read path
+            //  token0Volume should be equal to last.token0Volume * delta
+            //  token1Volume should be equal to last.token1Volume * delta
+            //  token0VolumeCumulative should be equal to last.token0VolumeCumulative + token0Volume
+            //  token1VolumeCumulative should be equal to last.token1VolumeCumulative + token1Volume
+            // if this transform is part of the write path
+            //  if the observation is in the same block
+            //      token0VolumeCumulative should be equal to last.token0VolumeCumulative + token0Volume
+            //      token1VolumeCumulative should be equal to last.token1VolumeCumulative + token1Volume
+            //      token0Volume should be equal to last.token0Volume + token0Volume
+            //      token1Volume should be equal to last.token1Volume + token1Volume
+            //  if the observation is in a new block
+            //      token0Volume should be equal to token0Volume
+            //      token1Volume should be equal to token1Volume
+            //      token0VolumeCumulative should be equal to last.token0VolumeCumulative + last.token0Volume * delta + token0Volume
+            //      token1VolumeCumulative should be equal to last.token1VolumeCumulative + last.token1Volume * delta + token1Volume
+
+            return Observation({
+                blockTimestamp: blockTimestamp,
+                token0VolumeCumulative: last.token0VolumeCumulative + 
+                    int256(last.token0Volume) * int256(uint256(delta)) +
+                    int256(token0Volume),
+                token1VolumeCumulative: last.token1VolumeCumulative +
+                    int256(last.token1Volume) * int256(uint256(delta)) +
+                    int256(token1Volume),
+                token0Volume: sameBlock ? last.token0Volume + token0Volume : token0Volume,
+                token1Volume: sameBlock ? last.token1Volume + token1Volume : token1Volume,
+                initialized: true
+            });
+            /*
             return Observation({
                 blockTimestamp: blockTimestamp,
                 token0VolumeCumulative: last.token0VolumeCumulative + 
                     int256(token0Volume) * int256(uint256(delta)),
                 token1VolumeCumulative: last.token1VolumeCumulative +
                     int256(token1Volume) * int256(uint256(delta)),
+                initialized: true
+            });
+            */
+        }
+    }
+
+    function transformReadPath(
+        Observation memory last,
+        uint32 blockTimestamp
+    )
+        private
+        pure
+        returns (Observation memory)
+    {
+        unchecked {
+            uint32 delta = blockTimestamp - last.blockTimestamp;
+
+            return Observation({
+                blockTimestamp: blockTimestamp,
+                token0VolumeCumulative: last.token0VolumeCumulative + 
+                    int256(last.token0Volume) * int256(uint256(delta)),
+                token1VolumeCumulative: last.token1VolumeCumulative +
+                    int256(last.token1Volume) * int256(uint256(delta)),
+                token0Volume: last.token0Volume,
+                token1Volume: last.token1Volume,
+                initialized: true
+            });
+        }
+    }
+
+    function transformWritePath(
+        Observation memory last,
+        uint32 blockTimestamp,
+        int128 token0Volume,
+        int128 token1Volume
+    )
+        private
+        pure
+        returns (Observation memory)
+    {
+        unchecked {
+            uint32 delta = blockTimestamp - last.blockTimestamp;
+            bool sameBlock = delta == 0;
+
+            return Observation({
+                blockTimestamp: blockTimestamp,
+                token0VolumeCumulative: last.token0VolumeCumulative + 
+                    int256(last.token0Volume) * int256(uint256(delta)) +
+                    int256(token0Volume),
+                token1VolumeCumulative: last.token1VolumeCumulative +
+                    int256(last.token1Volume) * int256(uint256(delta)) +
+                    int256(token1Volume),
+                token0Volume: sameBlock ? last.token0Volume + token0Volume : token0Volume,
+                token1Volume: sameBlock ? last.token1Volume + token1Volume : token1Volume,
                 initialized: true
             });
         }
@@ -74,13 +162,15 @@ library Oracle {
             blockTimestamp: time,
             token0VolumeCumulative: 0,
             token1VolumeCumulative: 0,
+            token0Volume: 0,
+            token1Volume: 0,
             initialized: true
         });
         return (1, 1);
     }
 
     /// @notice Writes an oracle observation to the array
-    /// @dev Writable at most once per block. Index represents the most recently written element. cardinality and index must be tracked externally.
+    /// @dev Index represents the most recently written element. cardinality and index must be tracked externally.
     /// If the index is at the end of the allowable array length (according to cardinality), and the next cardinality
     /// is greater than the current one, cardinality may be increased. This restriction is created to preserve ordering.
     /// @param self The stored oracle array
@@ -104,11 +194,9 @@ library Oracle {
         unchecked {
             Observation memory last = self[index];
 
-            // TODO - how to handle multiple writes in the same block?
-
             // do not update index or cardinality if observation is in the same block
             if (last.blockTimestamp == blockTimestamp) {
-                self[index] = transform(last, blockTimestamp, token0Volume, token1Volume);
+                self[index] = transformWritePath(last, blockTimestamp, token0Volume, token1Volume);
                 return (index, cardinality);
             }
 
@@ -120,7 +208,7 @@ library Oracle {
             }
 
             indexUpdated = (index + 1) % cardinalityUpdated;
-            self[indexUpdated] = transform(last, blockTimestamp, token0Volume, token1Volume);
+            self[indexUpdated] = transformWritePath(last, blockTimestamp, token0Volume, token1Volume);
         }
     }
 
@@ -206,8 +294,6 @@ library Oracle {
     /// @param target The timestamp at which the reserved observation should be for
     /// @param index The index of the observation that was most recently written to the observations array
     /// @param cardinality The number of populated elements in the oracle array
-    /// @param token0Volume The pool's token0 volume at the time of the call
-    /// @param token1Volume The pool's token1 volume at the time of the call
     /// @return beforeOrAt The observation which occurred at, or before, the given timestamp
     /// @return atOrAfter The observation which occurred at, or after, the given timestamp
     function getSurroundingObservations(
@@ -215,9 +301,7 @@ library Oracle {
         uint32 time,
         uint32 target,
         uint16 index,
-        uint16 cardinality,
-        int128 token0Volume,
-        int128 token1Volume
+        uint16 cardinality
     ) private view returns (Observation memory beforeOrAt, Observation memory atOrAfter) {
         unchecked {
             // optimistically set before to the newest observation
@@ -230,7 +314,7 @@ library Oracle {
                     return (beforeOrAt, atOrAfter);
                 } else {
                     // otherwise, we need to transform
-                    return (beforeOrAt, transform(beforeOrAt, target, token0Volume, token1Volume));
+                    return (beforeOrAt, transformReadPath(beforeOrAt, target));
                 }
             }
 
@@ -257,8 +341,6 @@ library Oracle {
     /// @param secondsAgo The amount of time to look back, in seconds, at which point to return an observation
     /// @param index The index of the observation that was most recently written to the observations array
     /// @param cardinality The number of populated elements in the oracle array
-    /// @param token0Volume The pool's token0 volume at the time of the call
-    /// @param token1Volume The pool's token1 volume at the time of the call
     /// @return token0VolumeCumulative The token0Volume * time elapsed since the pool was first initialized, as of `secondsAgo`
     /// @return token1VolumeCumulative The token1Volume * time elapsed since the pool was first initialized, as of `secondsAgo`
     function observeSingle(
@@ -266,21 +348,19 @@ library Oracle {
         uint32 time,
         uint32 secondsAgo,
         uint16 index,
-        uint16 cardinality,
-        int128 token0Volume,
-        int128 token1Volume
+        uint16 cardinality
     ) internal view returns (int256 token0VolumeCumulative, int256 token1VolumeCumulative) {
         unchecked {
             if (secondsAgo == 0) {
                 Observation memory last = self[index];
-                if (last.blockTimestamp != time) last = transform(last, time, token0Volume, token1Volume);
+                if (last.blockTimestamp != time) last = transformReadPath(last, time);
                 return (last.token0VolumeCumulative, last.token1VolumeCumulative);
             }
 
             uint32 target = time - secondsAgo;
 
             (Observation memory beforeOrAt, Observation memory atOrAfter) =
-                getSurroundingObservations(self, time, target, index, cardinality, token0Volume, token1Volume);
+                getSurroundingObservations(self, time, target, index, cardinality);
 
             if (target == beforeOrAt.blockTimestamp) {
                 // we're at the left boundary
@@ -311,8 +391,6 @@ library Oracle {
     /// @param secondsAgos Each amount of time to look back, in seconds, at which point to return an observation
     /// @param index The index of the observation that was most recently written to the observations array
     /// @param cardinality The number of populated elements in the oracle array
-    /// @param token0Volume The pool's current token0 volume
-    /// @param token1Volume The pool's current token1 volume
     /// @return token0VolumeCumulatives The token0Volumes * time elapsed since the pool was first initialized, as of each `secondsAgo`
     /// @return token1VolumeCumulatives The token1Volumes * time elapsed since the pool was first initialized, as of each `secondsAgo`
     function observe(
@@ -320,9 +398,7 @@ library Oracle {
         uint32 time,
         uint32[] memory secondsAgos,
         uint16 index,
-        uint16 cardinality,
-        int128 token0Volume,
-        int128 token1Volume
+        uint16 cardinality
     ) internal view returns (
         int256[] memory token0VolumeCumulatives,
         int256[] memory token1VolumeCumulatives
@@ -334,7 +410,7 @@ library Oracle {
             token1VolumeCumulatives = new int256[](secondsAgos.length);
             for (uint256 i = 0; i < secondsAgos.length; i++) {
                 (token0VolumeCumulatives[i], token1VolumeCumulatives[i]) =
-                    observeSingle(self, time, secondsAgos[i], index, cardinality, token0Volume, token1Volume);
+                    observeSingle(self, time, secondsAgos[i], index, cardinality);
             }
         }
     }

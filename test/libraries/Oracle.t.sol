@@ -14,17 +14,13 @@ contract TestOracle is Test, GasSnapshot {
         oracle = new OracleImplementation();
         initializedOracle = new OracleImplementation();
         initializedOracle.initialize(OracleImplementation.InitializeParams(
-            {time: 0, token0Volume: 0, token1Volume: 0}
+            {time: 0}
         ));
     }
 
     function testInitialize() public {
         snapStart("OracleInitialize");
-        oracle.initialize(
-            OracleImplementation.InitializeParams(
-                {time: 1, token0Volume: 1, token1Volume: 1}
-            )
-        );
+        oracle.initialize(OracleImplementation.InitializeParams({time: 1}));
         snapEnd();
 
         assertEq(oracle.index(), 0);
@@ -37,6 +33,8 @@ contract TestOracle is Test, GasSnapshot {
                 blockTimestamp: 1,
                 token0VolumeCumulative: 0,
                 token1VolumeCumulative: 0,
+                token0Volume: 0,
+                token1Volume: 0,
                 initialized: true
             })
         );
@@ -56,6 +54,8 @@ contract TestOracle is Test, GasSnapshot {
                 blockTimestamp: 0,
                 token0VolumeCumulative: 0,
                 token1VolumeCumulative: 0,
+                token0Volume: 0,
+                token1Volume: 0,
                 initialized: true
             })
         );
@@ -69,6 +69,8 @@ contract TestOracle is Test, GasSnapshot {
                     blockTimestamp: 1,
                     token0VolumeCumulative: 0,
                     token1VolumeCumulative: 0,
+                    token0Volume: 0,
+                    token1Volume: 0,
                     initialized: false
                 })
             );
@@ -144,8 +146,10 @@ contract TestOracle is Test, GasSnapshot {
             0,
             Oracle.Observation({
                 blockTimestamp: 1,
-                token0VolumeCumulative: 0,
-                token1VolumeCumulative: 0,
+                token0VolumeCumulative: 2,
+                token1VolumeCumulative: -1,
+                token0Volume: 2,
+                token1Volume: -1,
                 initialized: true
             })
         );
@@ -163,6 +167,8 @@ contract TestOracle is Test, GasSnapshot {
                 blockTimestamp: 6,
                 token0VolumeCumulative: 10,
                 token1VolumeCumulative: -5,
+                token0Volume: -2,
+                token1Volume: 1,
                 initialized: true
             })
         );
@@ -178,8 +184,10 @@ contract TestOracle is Test, GasSnapshot {
             0,
             Oracle.Observation({
                 blockTimestamp: 9,
-                token0VolumeCumulative: 4,
-                token1VolumeCumulative: -2,
+                token0VolumeCumulative: -6,
+                token1VolumeCumulative: 8,
+                token0Volume: -10,
+                token1Volume: 10,
                 initialized: true
             })
         );
@@ -204,8 +212,10 @@ contract TestOracle is Test, GasSnapshot {
             1,
             Oracle.Observation({
                 blockTimestamp: 1,
-                token0VolumeCumulative: 0,
-                token1VolumeCumulative: 0,
+                token0VolumeCumulative: 2,
+                token1VolumeCumulative: -1,
+                token0Volume: 2,
+                token1Volume: -1,
                 initialized: true
             })
         );
@@ -218,8 +228,10 @@ contract TestOracle is Test, GasSnapshot {
             1,
             Oracle.Observation({
                 blockTimestamp: 1,
-                token0VolumeCumulative: 2,
-                token1VolumeCumulative: -1,
+                token0VolumeCumulative: 5,
+                token1VolumeCumulative: -3,
+                token0Volume: 5,
+                token1Volume: -3,
                 initialized: true
             })
         );
@@ -232,8 +244,10 @@ contract TestOracle is Test, GasSnapshot {
             1,
             Oracle.Observation({
                 blockTimestamp: 1,
-                token0VolumeCumulative: 5,
-                token1VolumeCumulative: -3,
+                token0VolumeCumulative: 8,
+                token1VolumeCumulative: -5,
+                token0Volume: 8,
+                token1Volume: -5,
                 initialized: true
             })
         );
@@ -252,8 +266,10 @@ contract TestOracle is Test, GasSnapshot {
             1,
             Oracle.Observation({
                 blockTimestamp: 6,
-                token0VolumeCumulative: 0,
-                token1VolumeCumulative: 0,
+                token0VolumeCumulative: 2,
+                token1VolumeCumulative: -1,
+                token0Volume: 2,
+                token1Volume: -1,
                 initialized: true
             })
         );
@@ -269,8 +285,10 @@ contract TestOracle is Test, GasSnapshot {
             2,
             Oracle.Observation({
                 blockTimestamp: 10,
-                token0VolumeCumulative: 8,
-                token1VolumeCumulative: -4,
+                token0VolumeCumulative: 13,
+                token1VolumeCumulative: -7,
+                token0Volume: 3,
+                token1Volume: -2,
                 initialized: true
             })
         );
@@ -298,8 +316,10 @@ contract TestOracle is Test, GasSnapshot {
             2,
             Oracle.Observation({
                 blockTimestamp: 7,
-                token0VolumeCumulative: 8,
-                token1VolumeCumulative: -4,
+                token0VolumeCumulative: 13,
+                token1VolumeCumulative: -7,
+                token0Volume: 3,
+                token1Volume: -2,
                 initialized: true
             })
         );
@@ -331,8 +351,10 @@ contract TestOracle is Test, GasSnapshot {
             0,
             Oracle.Observation({
                 blockTimestamp: 12,
-                token0VolumeCumulative: 23,
-                token1VolumeCumulative: -14,
+                token0VolumeCumulative: 22,
+                token1VolumeCumulative: -13,
+                token0Volume: -6,
+                token1Volume: 4,
                 initialized: true
             })
         );
@@ -346,7 +368,7 @@ contract TestOracle is Test, GasSnapshot {
     }
 
     function testObserveFailsIfOlderDoesNotExist() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 0, token1Volume: 0}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         uint32[] memory secondsAgos = new uint32[](1);
         secondsAgos[0] = 1;
         vm.expectRevert(abi.encodeWithSelector(Oracle.TargetPredatesOldestObservation.selector, 5, 4));
@@ -354,22 +376,23 @@ contract TestOracle is Test, GasSnapshot {
     }
 
     function testDoesNotFailAcrossOverflowBoundary() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 2 ** 32 - 1, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 2 ** 32 - 1}));
+        oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 0, token0Volume: 3, token1Volume: -2}));
         oracle.advanceTime(2);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 1);
-        assertEq(token0VolumeCumulative, 2);
-        assertEq(token1VolumeCumulative, -1);
+        assertEq(token0VolumeCumulative, 6);
+        assertEq(token1VolumeCumulative, -4);
     }
 
     function testSingleObservationAtCurrentTime() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
         assertEq(token0VolumeCumulative, 0);
         assertEq(token1VolumeCumulative, 0);
     }
 
     function testSingleObservationInRecentPast() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.advanceTime(3);
         uint32[] memory secondsAgos = new uint32[](1);
         secondsAgos[0] = 4;
@@ -378,7 +401,7 @@ contract TestOracle is Test, GasSnapshot {
     }
 
     function testSingleObservationSecondsAgo() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.advanceTime(3);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 3);
         assertEq(token0VolumeCumulative, 0);
@@ -386,42 +409,42 @@ contract TestOracle is Test, GasSnapshot {
     }
 
     function testSingleObservationInPastCounterfactualInPast() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.advanceTime(3);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 1);
-        assertEq(token0VolumeCumulative, 4);
-        assertEq(token1VolumeCumulative, -2);
+        assertEq(token0VolumeCumulative, 0);
+        assertEq(token1VolumeCumulative, 0);
     }
 
     function testSingleObservationInPastCounterfactualNow() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.advanceTime(3);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
-        assertEq(token0VolumeCumulative, 6);
-        assertEq(token1VolumeCumulative, -3);
+        assertEq(token0VolumeCumulative, 0);
+        assertEq(token1VolumeCumulative, 0);
     }
 
     function testTwoObservationsChronologicalZeroSecondsAgoExact() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.grow(2);
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
-        assertEq(token0VolumeCumulative, 8);
-        assertEq(token1VolumeCumulative, -4);
+        assertEq(token0VolumeCumulative, 3);
+        assertEq(token1VolumeCumulative, -2);
     }
 
     function testTwoObservationsChronologicalZeroSecondsAgoCounterfactual() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.grow(2);
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         oracle.advanceTime(7);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
-        assertEq(token0VolumeCumulative, 29);
-        assertEq(token1VolumeCumulative, -18);
+        assertEq(token0VolumeCumulative, 24);
+        assertEq(token1VolumeCumulative, -16);
     }
 
     function testTwoObservationsChronologicalSecondsAgoExactlyFirstObservation() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.grow(2);
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         oracle.advanceTime(7);
@@ -431,60 +454,60 @@ contract TestOracle is Test, GasSnapshot {
     }
 
     function testTwoObservationsChronologicalSecondsAgoBetween() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.grow(2);
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         oracle.advanceTime(7);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 9);
-        assertEq(token0VolumeCumulative, 4);
-        assertEq(token1VolumeCumulative, -2);
+        assertEq(token0VolumeCumulative, 0);
+        assertEq(token1VolumeCumulative, 0);
     }
 
     function testTwoObservationsReverseOrderZeroSecondsAgoExact() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.grow(2);
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, token0Volume: 1, token1Volume: -1}));
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
-        assertEq(token0VolumeCumulative, 17);
-        assertEq(token1VolumeCumulative, -10);
+        assertEq(token0VolumeCumulative, 13);
+        assertEq(token1VolumeCumulative, -9);
     }
 
     function testTwoObservationsReverseOrderZeroSecondsAgoCounterfactual() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.grow(2);
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, token0Volume: 1, token1Volume: -1}));
         oracle.advanceTime(7);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
-        assertEq(token0VolumeCumulative, 24);
-        assertEq(token1VolumeCumulative, -17);
+        assertEq(token0VolumeCumulative, 20);
+        assertEq(token1VolumeCumulative, -16);
     }
 
     function testTwoObservationsReverseOrderSecondsAgoExactlyOnFirstObservation() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.grow(2);
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, token0Volume: 1, token1Volume: -1}));
         oracle.advanceTime(7);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 10);
-        assertEq(token0VolumeCumulative, 8);
-        assertEq(token1VolumeCumulative, -4);
+        assertEq(token0VolumeCumulative, 3);
+        assertEq(token1VolumeCumulative, -2);
     }
 
     function testTwoObservationsReverseOrderSecondsAgoBetween() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.grow(2);
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 4, token0Volume: 3, token1Volume: -2}));
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, token0Volume: 1, token1Volume: -1}));
         oracle.advanceTime(7);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 9);
-        assertEq(token0VolumeCumulative, 11);
-        assertEq(token1VolumeCumulative, -6);
+        assertEq(token0VolumeCumulative, 6);
+        assertEq(token1VolumeCumulative, -4);
     }
 
     function testCanFetchMultipleObservations() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.grow(4);
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 13, token0Volume: 3, token1Volume: -2}));
         oracle.advanceTime(5);
@@ -499,22 +522,22 @@ contract TestOracle is Test, GasSnapshot {
             oracle.observe(secondsAgos);
         assertEq(token0VolumeCumulatives.length, 6);
         assertEq(token1VolumeCumulatives.length, 6);
-        assertEq(token0VolumeCumulatives[0], 41);
-        assertEq(token1VolumeCumulatives[0], -23);
-        assertEq(token0VolumeCumulatives[1], 32);
-        assertEq(token1VolumeCumulatives[1], -17);
-        assertEq(token0VolumeCumulatives[2], 20);
-        assertEq(token1VolumeCumulatives[2], -10);
-        assertEq(token0VolumeCumulatives[3], 10);
-        assertEq(token1VolumeCumulatives[3], -5);
-        assertEq(token0VolumeCumulatives[4], 6);
-        assertEq(token1VolumeCumulatives[4], -3);
+        assertEq(token0VolumeCumulatives[0], 18);
+        assertEq(token1VolumeCumulatives[0], -12);
+        assertEq(token0VolumeCumulatives[1], 9);
+        assertEq(token1VolumeCumulatives[1], -6);
+        assertEq(token0VolumeCumulatives[2], 0);
+        assertEq(token1VolumeCumulatives[2], 0);
+        assertEq(token0VolumeCumulatives[3], 0);
+        assertEq(token1VolumeCumulatives[3], 0);
+        assertEq(token0VolumeCumulatives[4], 0);
+        assertEq(token1VolumeCumulatives[4], 0);
         assertEq(token0VolumeCumulatives[5], 0);
         assertEq(token1VolumeCumulatives[5], 0);
     }
 
     function testObserveGasSinceMostRecent() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         oracle.advanceTime(2);
         uint32[] memory secondsAgos = new uint32[](1);
         secondsAgos[0] = 1;
@@ -522,14 +545,14 @@ contract TestOracle is Test, GasSnapshot {
     }
 
     function testObserveGasCurrentTime() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         uint32[] memory secondsAgos = new uint32[](1);
         secondsAgos[0] = 0;
         snap("OracleObserveCurrentTime", oracle.getGasCostOfObserve(secondsAgos));
     }
 
     function testObserveGasCurrentTimeCounterfactual() public {
-        oracle.initialize(OracleImplementation.InitializeParams({time: 5, token0Volume: 2, token1Volume: -1}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: 5}));
         initializedOracle.advanceTime(5);
         uint32[] memory secondsAgos = new uint32[](1);
         secondsAgos[0] = 0;
@@ -548,8 +571,8 @@ contract TestOracle is Test, GasSnapshot {
         setupOracleWithManyObservations(startingTime);
 
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
-        assertEq(token0VolumeCumulative, 61);
-        assertEq(token1VolumeCumulative, -39);
+        assertEq(token0VolumeCumulative, 78);
+        assertEq(token1VolumeCumulative, -50);
     }
 
     function testManyObservationsLatestObservation5SecondsAfterLatest(uint32 startingTime) public {
@@ -558,8 +581,8 @@ contract TestOracle is Test, GasSnapshot {
         // latest observation 5 seconds after latest
         oracle.advanceTime(5);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 5);
-        assertEq(token0VolumeCumulative, 61);
-        assertEq(token1VolumeCumulative, -39);
+        assertEq(token0VolumeCumulative, 78);
+        assertEq(token1VolumeCumulative, -50);
     }
 
     function testManyObservationsCurrentObservation5SecondsAfterLatest(uint32 startingTime) public {
@@ -567,16 +590,16 @@ contract TestOracle is Test, GasSnapshot {
 
         oracle.advanceTime(5);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 0);
-        assertEq(token0VolumeCumulative, 96);
-        assertEq(token1VolumeCumulative, -64);
+        assertEq(token0VolumeCumulative, 113);
+        assertEq(token1VolumeCumulative, -75);
     }
 
     function testManyObservationsBetweenLatestObservationAtLatest(uint32 startingTime) public {
         setupOracleWithManyObservations(startingTime);
 
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 3);
-        assertEq(token0VolumeCumulative, 43);
-        assertEq(token1VolumeCumulative, -27);
+        assertEq(token0VolumeCumulative, 56);
+        assertEq(token1VolumeCumulative, -33);
     }
 
     function testManyObservationsBetweenLatestObservationAfterLatest(uint32 startingTime) public {
@@ -584,14 +607,14 @@ contract TestOracle is Test, GasSnapshot {
 
         oracle.advanceTime(5);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 8);
-        assertEq(token0VolumeCumulative, 43);
-        assertEq(token1VolumeCumulative, -27);
+        assertEq(token0VolumeCumulative, 56);
+        assertEq(token1VolumeCumulative, -33);
     }
 
     function testManyObservationsOlderThanOldestReverts(uint32 startingTime) public {
         setupOracleWithManyObservations(startingTime);
 
-        (uint32 oldestTimestamp,,,) = oracle.observations(oracle.index() + 1);
+        (uint32 oldestTimestamp,,,,,) = oracle.observations(oracle.index() + 1);
         uint32 secondsAgo = 15;
         // overflow desired here
         uint32 target;
@@ -622,16 +645,16 @@ contract TestOracle is Test, GasSnapshot {
     function testManyObservationsOldest(uint32 startingTime) public {
         setupOracleWithManyObservations(startingTime);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 14);
-        assertEq(token0VolumeCumulative, 4);
-        assertEq(token1VolumeCumulative, -2);
+        assertEq(token0VolumeCumulative, 9);
+        assertEq(token1VolumeCumulative, -5);
     }
 
     function testManyObservationsOldestAfterTime(uint32 startingTime) public {
         setupOracleWithManyObservations(startingTime);
         oracle.advanceTime(6);
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 20);
-        assertEq(token0VolumeCumulative, 4);
-        assertEq(token1VolumeCumulative, -2);
+        assertEq(token0VolumeCumulative, 9);
+        assertEq(token1VolumeCumulative, -5);
     }
 
     function testManyObservationsFetchManyValues(uint32 startingTime) public {
@@ -647,20 +670,20 @@ contract TestOracle is Test, GasSnapshot {
         secondsAgos[6] = 0;
         (int256[] memory token0VolumeCumulatives, int256[] memory token1VolumeCumulatives) =
             oracle.observe(secondsAgos);
-        assertEq(token0VolumeCumulatives[0], 4);
-        assertEq(token1VolumeCumulatives[0], -2);
-        assertEq(token0VolumeCumulatives[1], 13);
+        assertEq(token0VolumeCumulatives[0], 9);
+        assertEq(token1VolumeCumulatives[0], -5);
+        assertEq(token0VolumeCumulatives[1], 12);
         assertEq(token1VolumeCumulatives[1], -8);
-        assertEq(token0VolumeCumulatives[2], 20);
-        assertEq(token1VolumeCumulatives[2], -12);
-        assertEq(token0VolumeCumulatives[3], 37);
-        assertEq(token1VolumeCumulatives[3], -23);
-        assertEq(token0VolumeCumulatives[4], 68);
-        assertEq(token1VolumeCumulatives[4], -44);
-        assertEq(token0VolumeCumulatives[5], 96);
-        assertEq(token1VolumeCumulatives[5], -64);
-        assertEq(token0VolumeCumulatives[6], 103);
-        assertEq(token1VolumeCumulatives[6], -69);
+        assertEq(token0VolumeCumulatives[2], 28);
+        assertEq(token1VolumeCumulatives[2], -16);
+        assertEq(token0VolumeCumulatives[3], 49);
+        assertEq(token1VolumeCumulatives[3], -29);
+        assertEq(token0VolumeCumulatives[4], 85);
+        assertEq(token1VolumeCumulatives[4], -55);
+        assertEq(token0VolumeCumulatives[5], 113);
+        assertEq(token1VolumeCumulatives[5], -75);
+        assertEq(token0VolumeCumulatives[6], 120);
+        assertEq(token1VolumeCumulatives[6], -80);
     }
 
     function testGasAllOfLast20Seconds() public {
@@ -718,49 +741,49 @@ contract TestOracle is Test, GasSnapshot {
 
         // can observe into the ordered portion with exact seconds ago
         (int256 token0VolumeCumulative, int256 token1VolumeCumulative) = observeSingle(oracle, 100 * 13);
-        assertEq(token0VolumeCumulative, 27970560813);
-        assertEq(token1VolumeCumulative, -27970560813);
+        assertEq(token0VolumeCumulative, 30122208013);
+        assertEq(token1VolumeCumulative, -30122208013);
 
         // can observe into the ordered portion with unexact seconds ago
         (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 100 * 13 + 5);
-        assertEq(token0VolumeCumulative, 27970232823);
-        assertEq(token1VolumeCumulative, -27970232823);
+        assertEq(token0VolumeCumulative, 30121854792);
+        assertEq(token1VolumeCumulative, -30121854792);
 
         // can observe at exactly the latest observation
         (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 0);
-        assertEq(token0VolumeCumulative, 28055903863);
-        assertEq(token1VolumeCumulative, -28055903863);
+        assertEq(token0VolumeCumulative, 30214116013);
+        assertEq(token1VolumeCumulative, -30214116013);
 
         // can observe into the unordered portion of array at exact seconds ago
         (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 200 * 13);
-        assertEq(token0VolumeCumulative, 27885347763);
-        assertEq(token1VolumeCumulative, -27885347763);
+        assertEq(token0VolumeCumulative, 30030440013);
+        assertEq(token1VolumeCumulative, -30030440013);
 
         // can observe into the unordered portion of array at seconds ago between observations
         (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 200 * 13 + 5);
-        assertEq(token0VolumeCumulative, 27885020273);
-        assertEq(token1VolumeCumulative, -27885020273);
+        assertEq(token0VolumeCumulative, 30030087328);
+        assertEq(token1VolumeCumulative, -30030087328);
 
         // can observe the oldest observation
         (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 65534 * 13);
-        assertEq(token0VolumeCumulative, 175890);
-        assertEq(token1VolumeCumulative, -175890);
+        assertEq(token0VolumeCumulative, 189585);
+        assertEq(token1VolumeCumulative, -189585);
 
         // can observe at exactly the latest observation after some time passes
         oracle.advanceTime(5);
         (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 5);
-        assertEq(token0VolumeCumulative, 28055903863);
-        assertEq(token1VolumeCumulative, -28055903863);
+        assertEq(token0VolumeCumulative, 30214116013);
+        assertEq(token1VolumeCumulative, -30214116013);
 
         // can observe after the latest observation counterfactual
         (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 3);
-        assertEq(token0VolumeCumulative, 28056035261);
-        assertEq(token1VolumeCumulative, -28056035261);
+        assertEq(token0VolumeCumulative, 30214247411);
+        assertEq(token1VolumeCumulative, -30214247411);
 
         // can observe the oldest observation after time passes
         (token0VolumeCumulative, token1VolumeCumulative) = observeSingle(oracle, 65534 * 13 + 5);
-        assertEq(token0VolumeCumulative, 175890);
-        assertEq(token1VolumeCumulative, -175890);
+        assertEq(token0VolumeCumulative, 189585);
+        assertEq(token1VolumeCumulative, -189585);
     }
 
     function testFullOracleGasCostObserveZero() public {
@@ -834,16 +857,24 @@ contract TestOracle is Test, GasSnapshot {
     function assertObservation(OracleImplementation _initializedOracle, uint64 idx, Oracle.Observation memory expected)
         internal
     {
-        (uint32 blockTimestamp, int256 token0VolumeCumulative, int256 token1VolumeCumulative, bool initialized) =
-            _initializedOracle.observations(idx);
+        (uint32 blockTimestamp,
+         int256 token0VolumeCumulative,
+         int256 token1VolumeCumulative,
+         int128 token0Volume,
+         int128 token1Volume,
+         bool initialized
+        ) = _initializedOracle.observations(idx);
+
         assertEq(blockTimestamp, expected.blockTimestamp);
         assertEq(token0VolumeCumulative, expected.token0VolumeCumulative);
         assertEq(token1VolumeCumulative, expected.token1VolumeCumulative);
+        assertEq(token0Volume, expected.token0Volume);
+        assertEq(token1Volume, expected.token1Volume);
         assertEq(initialized, expected.initialized);
     }
 
     function setupOracleWithManyObservations(uint32 startingTime) internal {
-        oracle.initialize(OracleImplementation.InitializeParams({time: startingTime, token0Volume: 0, token1Volume: 0}));
+        oracle.initialize(OracleImplementation.InitializeParams({time: startingTime}));
         oracle.grow(5);
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 3, token0Volume: 2, token1Volume: -1}));
         oracle.update(OracleImplementation.UpdateParams({advanceTimeBy: 2, token0Volume: 3, token1Volume: -2}));
@@ -858,9 +889,7 @@ contract TestOracle is Test, GasSnapshot {
         oracle.initialize(
             OracleImplementation.InitializeParams({
                 // Monday, October 5, 2020 9:00:00 AM GMT-05:00
-                time: 1601906400,
-                token0Volume: 0,
-                token1Volume: 0
+                time: 1601906400
             })
         );
 
