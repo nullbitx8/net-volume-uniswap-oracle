@@ -94,6 +94,10 @@ contract NetVolumeOracleV2 is BaseHook {
     }
 
     /// @notice Observe the given pool for the timestamps
+    /// @param key The pool key to observe
+    /// @param secondsAgos An array of seconds ago to return observations for
+    /// @return token0VolumeCumulatives An array of token0 volume cumulatives for the given seconds agos
+    /// @return token1VolumeCumulatives An array of token1 volume cumulatives for the given seconds agos
     function observe(PoolKey calldata key, uint32[] calldata secondsAgos)
         external
         view
@@ -112,6 +116,8 @@ contract NetVolumeOracleV2 is BaseHook {
     }
 
     /// @notice Returns the state for the given pool key
+    /// @param key The pool key to return the state for
+    /// @return state The state for the given pool key
     function getState(PoolKey calldata key) 
         external
         view
@@ -120,6 +126,9 @@ contract NetVolumeOracleV2 is BaseHook {
     }
 
     /// @notice Returns the observation for the given pool key and observation index
+    /// @param key The pool key to return the observation for
+    /// @param index The index of the observation to return
+    /// @return observation The observation for the given pool key and observation index
     function getObservation(PoolKey calldata key, uint256 index)
         external
         view
@@ -129,6 +138,10 @@ contract NetVolumeOracleV2 is BaseHook {
     }
 
     /// @notice Increase the cardinality target for the given pool
+    /// @param key The pool key to increase the cardinality target for
+    /// @param cardinalityNext The new cardinality target
+    /// @return cardinalityNextOld The old cardinality target
+    /// @return cardinalityNextNew The new cardinality target
     function increaseCardinalityNext(PoolKey calldata key, uint16 cardinalityNext)
         external
         returns (uint16 cardinalityNextOld, uint16 cardinalityNextNew)
@@ -142,19 +155,27 @@ contract NetVolumeOracleV2 is BaseHook {
         state.cardinalityNext = cardinalityNextNew;
     }
 
+    /// @notice Returns the time weighted average net volume for the given pool key between the start and end times
+    /// @param key The pool key to return the net volume for
+    /// @param startTime The start time to query for
+    /// @param endTime The end time to query for
+    /// @return token0NetVolume The time weighted average net volume of token0 between the start and end times
+    /// @return token1NetVolume The time weighted average net volume of token1 between the start and end times
     function getNetVolume(PoolKey calldata key, uint32 startTime, uint32 endTime)
         external
         view
         returns (int256 token0NetVolume, int256 token1NetVolume)
     {
         PoolId id = key.toId();
-
         ObservationState memory state = states[id];
 
+        // determine how many seconds ago the start and end times are
         uint32[] memory secondsAgos = new uint32[](2);
-        secondsAgos[0] = uint32(block.timestamp) - startTime;
-        secondsAgos[1] = uint32(block.timestamp) - endTime;
+        uint32 current = uint32(block.timestamp);
+        secondsAgos[0] = current - startTime;
+        secondsAgos[1] = current - endTime;
 
+        // get the volume cumulatives for the start and end times
         (
             int256[] memory token0VolumeCumulatives,
             int256[] memory token1VolumeCumulatives
@@ -165,10 +186,51 @@ contract NetVolumeOracleV2 is BaseHook {
             state.cardinality
         );
 
+        // return the time weighted average of the net volume
+        int256 secondsBetween = int256(uint256(endTime - startTime));
         token0NetVolume = (token0VolumeCumulatives[1] - token0VolumeCumulatives[0])
-            / int256(uint256(endTime - startTime));
+            / secondsBetween;
 
         token1NetVolume = (token1VolumeCumulatives[1] - token1VolumeCumulatives[0])
-            / int256(uint256(endTime - startTime));
+            / secondsBetween;
+    }
+
+    /// @notice Returns the time weighted average net volume for the given pool key since the start time until now
+    /// @param key The pool key to return the net volume for
+    /// @param startTime The start time to query for
+    /// @return token0NetVolume The time weighted average net volume of token0 since the start time until now
+    /// @return token1NetVolume The time weighted average net volume of token1 since the start time until now
+    function getNetVolume(PoolKey calldata key, uint32 startTime)
+        external
+        view
+        returns (int256 token0NetVolume, int256 token1NetVolume)
+    {
+        PoolId id = key.toId();
+        ObservationState memory state = states[id];
+
+        // determine how many seconds ago the start time was
+        uint32[] memory secondsAgos = new uint32[](2);
+        uint32 current = uint32(block.timestamp);
+        secondsAgos[0] = current - startTime;
+        secondsAgos[1] = 0;
+
+        // get the volume cumulatives since the start time
+        (
+            int256[] memory token0VolumeCumulatives,
+            int256[] memory token1VolumeCumulatives
+        ) = observations[id].observe(
+            uint32(block.timestamp),
+            secondsAgos,
+            state.index,
+            state.cardinality
+        );
+
+        // return the time weighted average of the net volume
+        int256 secondsBetween = int256(uint256(current - startTime));
+        token0NetVolume = (token0VolumeCumulatives[1] - token0VolumeCumulatives[0])
+            / secondsBetween;
+
+        token1NetVolume = (token1VolumeCumulatives[1] - token1VolumeCumulatives[0])
+            / secondsBetween;
     }
 }

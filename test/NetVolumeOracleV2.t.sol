@@ -216,22 +216,22 @@ contract TestNetVolumeOracleV2 is Test, Deployers {
     }
 
     // get time weighted average net volume for a pool during a given time period
-    function testGetNetVolume() public {
+    function testGetNetVolumeTimePeriod() public {
         hook.increaseCardinalityNext(key, 3);
-
-        // make first swap
-        BalanceDelta deltaFirst = swap_zeroForOne(100);
 
         // set the times to be observed
         uint32 startTime = uint32(block.timestamp) + 20;
         uint32 endTime = uint32(block.timestamp) + 40;
+
+        // make first swap (won't be queried)
+        swap_zeroForOne(100);
 
         // make second swap
         vm.warp(startTime);
         BalanceDelta deltaSecond = swap_zeroForOne(200);
 
         // make third swap
-        vm.warp(block.timestamp + 20);
+        vm.warp(endTime);
         BalanceDelta deltaThird = swap_zeroForOne(300);
 
         // get net volume
@@ -242,8 +242,37 @@ contract TestNetVolumeOracleV2 is Test, Deployers {
         );
         
         // assert net volume
-        assertEq(token0NetVolume, (deltaSecond.amount0() + deltaThird.amount0()) / 2);
-        assertEq(token1NetVolume, (deltaSecond.amount1() + deltaThird.amount1()) / 2);
+        assertEq(token0NetVolume, (deltaSecond.amount0() * 20 + deltaThird.amount0()) / 20);
+        assertEq(token1NetVolume, (deltaSecond.amount1() * 20 + deltaThird.amount1()) / 20);
     }
 
+    // get time weighted average net volume for a pool between the given time and now
+    function testGetNetVolumeSinceGivenTime() public {
+        hook.increaseCardinalityNext(key, 3);
+
+        // set the times to be observed
+        uint32 startTime = uint32(block.timestamp) + 20;
+        uint32 endTime = uint32(block.timestamp) + 40;
+
+        // make first swap (won't be queried)
+        swap_zeroForOne(100);
+
+        // make second swap
+        vm.warp(startTime);
+        BalanceDelta deltaSecond = swap_zeroForOne(200);
+
+        // make third swap
+        vm.warp(endTime);
+        BalanceDelta deltaThird = swap_zeroForOne(300);
+
+        // get net volume
+        (int256 token0NetVolume, int256 token1NetVolume) = hook.getNetVolume(
+            key, 
+            startTime
+        );
+        
+        // assert net volume
+        assertEq(token0NetVolume, (deltaSecond.amount0() * 20 + deltaThird.amount0()) / 20);
+        assertEq(token1NetVolume, (deltaSecond.amount1() * 20 + deltaThird.amount1()) / 20);
+    }
 }
